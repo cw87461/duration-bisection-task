@@ -1,0 +1,253 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Time perception task</title>
+    <script src="https://unpkg.com/jspsych@7.0.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.0.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.0.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-browser-check@1.0.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@1.0.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-audio-button-response@1.0.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-instructions@1.0.0"></script>
+
+    <script src="stimulus_list.js"> </script>
+    
+    <link rel="stylesheet" href="https://unpkg.com/jspsych@7.0.0/css/jspsych.css">
+    <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@0.1.1/css/survey.css">
+
+</head>
+<body>
+    <style>
+    </style>
+</body>
+<script>
+
+// Two forward slashes create a comment. Use comments to describe what each bit of code does. 
+// DO NOT DELETE/CHANGE ANYTHING THAT APPEARS ABOVE THIS LINE! 
+
+/* This is also a comment.
+The difference with the above is that is that each line under automatically is turned into a comment as well.
+To close the comment section, you have to type * followed by /. */
+
+
+// Initialize jsPsych
+  var jsPsych = initJsPsych({
+    show_progress_bar: true,
+    auto_update_progress_bar: false,
+    use_webaudio: false,
+    on_finish: function () {
+       jsPsych.data.displayData(); // NB: remove data display from final version! 
+    }
+  });
+
+// Before we do anything else, we are going to put to put together (concatenate) our stimulus list for the test block
+var full_stimulus_list = []  // Create an empty veriable wihch is going to contain all the stimuli for the test block
+var standard_stimuli_full_list = jsPsych.randomization.repeat(standard_stimulus_list, 3) // Repeat each of the standard stimuli X number of times
+var deviant_stimuli_full_list = jsPsych.randomization.repeat(deviant_stimulus_list, 1) // Repeat each of the deviant stimuli Y number of times
+var full_stimulus_list = full_stimulus_list.concat(standard_stimuli_full_list).concat(deviant_stimuli_full_list) // Finally, we comine the standard and deviant stimulus lists together
+var n_trials_total = full_stimulus_list.length + training_stimulus_list.length
+
+// Initialize a variable that will contain all separate chunks of the experiment in order
+var timeline = [];
+
+// Collect system information
+var setup_info = {
+    type: jsPsychBrowserCheck
+};
+
+// Add (or "push") the above chunk to the timeline
+timeline.push(setup_info);
+
+// Welcome message
+var welcome_message = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<p>This task contains audio clips. </p>
+    <p>  Please make sure you are in a quiet and relaxed environment and have a pair of headphones or speakers.</p>
+    <p>  You will now hear a tone so that you can adjust the volume of the audio to a comfortable level.<br>Set the volume low in case it is too loud!</p>`,
+    choices: ['Continue'],
+    on_start: function () {
+        // set progress bar to 0 at the start of experiment
+        jsPsych.setProgressBar(0);
+    } 
+ };
+
+// Add (or "push") welcome_message to the timeline
+ timeline.push(welcome_message);
+
+// Stimulus for participants to adjust volume
+var volume_adjustment = {
+    type: jsPsychAudioButtonResponse,
+    stimulus:'stimuli/volume_check.wav',
+    choices:  ['Play again', 'Continue'],
+    prompt:  'Adjust the volume to a comfortable level at which you can clearly hear all three sound clearly.',
+    response_ends_trial: true,
+    trial_ends_after_audio: false
+};
+// If participants click "Play again", repet the volume adjustment sound
+var volume_adjustment_loop ={
+    timeline: [volume_adjustment],
+    loop_function: function (data){
+        if(data.values()[0].response == 0){
+            return true; 
+        }   else {
+            return false; 
+        } 
+    } 
+} 
+// Add (or "push") volume_adjustment_loop to the timeline
+ timeline.push(volume_adjustment_loop);
+
+// Put together the instructions before training block
+var training_block_instructions = {
+    type:jsPsychInstructions, 
+    pages: [
+        'Instructions for Training Block. This text will appear on page 1.',  // a comma creates a new page
+        'This text will also appear on page 2. ' +
+        'This text will also appear on page 2, on the same line as the text above.' +
+        '<br>' +
+        'This text will appear on page 2, but on a new line.' , 
+    ],
+    show_clickable_nav: true   
+};
+
+// Put together the instruction before the test block 
+var test_block_instructions = {
+    type:jsPsychInstructions, 
+    pages: [
+        'Instructions for Test Block. This text will appear on page 1.',  // a comma creates a new page
+        'This text will also appear on page 2. ' +
+        'This text will also appear on page 2, on the same line as the text above.' +
+        '<br>' +
+        'This text will appear on page 2, but on a new line.'
+    ],
+    show_clickable_nav: true
+};
+
+/* Now we will prepare each component of the trials in the training and test block. 
+Each trial will start with a prompt.
+Than participants will hear a stimulus.
+After that, participants will classify the stimulus as long or short. 
+In the training block ONLY, participants will receive feedback telling them if their response was correct or not. */
+
+// Start each trial with a prompt
+var post_prompt_iti = 700; // in milliseconds
+
+var trial_prompt = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: 'Press space to start the next trial',
+    choices: [' '],
+    post_trial_gap: post_prompt_iti // there will be a pause before the start of the stimulus
+};
+
+// Play stimulus
+var play_stimulus = {
+    type: jsPsychAudioKeyboardResponse,
+    stimulus:[jsPsych.timelineVariable('stimulus')],
+    choices: "NO_KEYS",
+    prompt: [],
+    response_ends_trial: false,
+    trial_ends_after_audio: true
+};
+
+// Collect response - Training block
+var training_duration_response = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: 'Was this stimulus short or long',
+    choices: ['e', 'i'],
+    prompt: "<p>Press 'e' for short and 'i' for long.</p>",
+    response_ends_trial: true,
+    on_finish: function (data) {
+        data.correct_response = jsPsych.timelineVariable("correct_response")
+        if(data.response == data.correct_response) {data.correct = 1}
+        else {data.correct = 0}
+        
+        var curr_progress_bar_value = jsPsych.getProgressBarCompleted();
+        jsPsych.setProgressBar(curr_progress_bar_value + (1 / n_trials_total));}
+    
+};
+
+// Collect response - Test block
+var duration_response = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: 'Was this stimulus short or long?',
+    choices: ['e', 'i'],
+    prompt: "<p>Press 'e' for short and 'i' for long.</p>",
+    response_ends_trial: true,
+    on_finished:function(data) {
+        var curr_progress_bar_value = jsPsych.getProgressBarCompleted();
+        jsPsych.setProgressBar(curr_progress_bar_value + (1 / n_trials_total));}
+};
+
+
+// Provide feedback - Training block only
+var feedback =  {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus:  function(){
+    /* The feedback stimulus is a dynamic parameter because we can't know in advance whether
+    the stimulus should be 'correct' or 'incorrect'.
+    Instead, this function will check the accuracy of the last response and use that information to set
+    the stimulus value on each trial. */
+    var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+    if(last_trial_correct){
+      return "<p>Your response was correct!</p>"; // the parameter value has to be returned from the function
+    } else {
+      return "<p>Your response was not correct</p>"; // the parameter value has to be returned from the function
+    }
+    },
+    choices: [' '],
+    prompt: "<p>Press space to continue.</p>",
+    response_ends_trial: true
+};
+
+/* Assemble the trial structure of the training block
+1. Each trial starts with a prompt
+2. Participants hear a sound. In the training block that is either the 1400ms standard stimulus or the 2600ms standard stimulus
+3. Participants have to report whether the stimulus was short or long
+4. Participant are presented with feedback stating whether their response was correct or not
+
+All of this repeates 10 times per stimulus (20 trials total), so we set repetitions to 10
+For the training block, we are using the stimuli in training_stimulus_list, so we set "timeline_variables" to training_stimulus_list. */
+
+var training_trial_structure = {
+        timeline: [trial_prompt, play_stimulus, training_duration_response, feedback],
+        timeline_variables: training_stimulus_list,
+        randomize_order: true,
+        repetitions: 2 // in the real experiment this will be 10
+}
+
+// Add the training_block_instructions to the timeline 
+timeline.push(training_block_instructions);
+
+// Add the training_trial_structure to the timeline 
+timeline.push(training_trial_structure)
+
+/* Assemble the trial structure of the test block
+1. Each trial starts with a prompt
+2. Participants hear a sound. In the test block, participants will hear the stimuli in full_stimulus_list. 
+3. Participants have to report whether the stimulus was short or long
+
+For the test block, we are using the stimuli in full_stimulus_list, so we set "timeline_variables" to full_stimulus_list.
+Here we will set repetitions to 1 because full_stimulus_list already contains the correct number of repetitions per stimulus. */
+
+ var test_trial_structure = {
+        timeline: [trial_prompt, play_stimulus, duration_response],
+        timeline_variables: full_stimulus_list,
+        randomize_order: true,
+        repetitions: 1
+};
+
+// Add the test_block_instructions to the timeline 
+timeline.push(test_block_instructions);
+
+// Add the test_trial_structure to the timeline 
+timeline.push(test_trial_structure)
+
+// Add link to raffle
+
+// DO NOT DELETE/CHANGE ANYTHING THAT APPEARS BELOW THIS LINE!!!
+
+// Run the experiment
+jsPsych.run(timeline);
+
+</script>
+</html>
