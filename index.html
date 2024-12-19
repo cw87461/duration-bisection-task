@@ -101,11 +101,11 @@ var volume_adjustment_loop ={
 var training_block_instructions = {
     type:jsPsychInstructions, 
     pages: [
-        'Instructions for Training Block. This text will appear on page 1.',  // a comma creates a new page
-        'This text will also appear on page 2. ' +
-        'This text will also appear on page 2, on the same line as the text above.' +
+        'Instructions for Training Block. You will next hear one of two sounds, either short or long.',  // a comma creates a new page
+        'Please listen closely. ' +
+        'Press either e on your keyboard if the sound is short, or i if the sound is long.' +
         '<br>' +
-        'This text will appear on page 2, but on a new line.' , 
+        'You will have multiple attempts for the Training Block and feedback will be given after each response.' , 
     ],
     show_clickable_nav: true   
 };
@@ -114,11 +114,11 @@ var training_block_instructions = {
 var test_block_instructions = {
     type:jsPsychInstructions, 
     pages: [
-        'Instructions for Test Block. This text will appear on page 1.',  // a comma creates a new page
-        'This text will also appear on page 2. ' +
-        'This text will also appear on page 2, on the same line as the text above.' +
+        'Instructions for Test Block. Congratulations on completing the Training Block.',  // a comma creates a new page
+        'Please listen closely. ' +
+        'Press either e on your keyboard if the sound is short, or i if the sound is long' +
         '<br>' +
-        'This text will appear on page 2, but on a new line.'
+        'You will no longer receive feedback on your answers, please enter the correct keystroke accordingly.'
     ],
     show_clickable_nav: true
 };
